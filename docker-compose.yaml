@@ -1,0 +1,60 @@
+# Docker Compose Version
+version: '3.8'
+
+# Defining the project name
+name: expense
+
+# Creating a network named 'expense' for all services to communicate
+networks:
+  default:
+    name: expense
+
+# Defining volumes for persistent storage
+volumes:
+  mysql:  # This volume stores MySQL database data to prevent data loss
+    # external: true  # Uncomment this if you manually create the volume using `docker volume create mysql`
+
+# Defining services (containers)
+services:
+  mysql:
+    # MySQL service using a custom-built image
+    image: joindevops/mysql:v1.0
+    container_name: mysql  # Naming the container 'mysql'
+    
+    # Defining environment variables for MySQL database configuration
+    environment:
+      - MYSQL_ROOT_PASSWORD=ExpenseApp@1  # Root password for MySQL
+      - MYSQL_USER=expense  # Creating a new MySQL user
+      - MYSQL_PASSWORD=ExpenseApp@1  # Password for the new user
+      - MYSQL_DATABASE=transactions  # Default database to create
+
+    # Attaching the persistent volume to store database data
+    volumes:
+      - source: mysql
+        target: /var/lib/mysql
+        type: volume  # Mounting the 'mysql' volume to store database files
+
+  backend:
+    # Backend service using a custom-built image
+    image: joindevops/backend:v1.0
+    container_name: backend  # Naming the container 'backend'
+    
+    # Adding a command to wait for MySQL to be ready before starting the backend
+    command: sh -c "sleep 20 && node /opt/server/index.js"
+
+    # Ensuring backend starts only after MySQL is up
+    depends_on: 
+      - mysql
+
+  frontend:
+    # Frontend service using a custom-built image
+    image: joindevops/frontend:v1.0
+    container_name: frontend  # Naming the container 'frontend'
+    
+    # Ensuring frontend starts only after backend is running
+    depends_on:
+      - backend
+
+    # Exposing port 80 on the host to access the frontend
+    ports:
+      - "80:80"
