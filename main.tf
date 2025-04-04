@@ -8,6 +8,7 @@ module "docker" {
   subnet_id = "subnet-0a6f1c9704ca109db"
   ami = data.aws_ami.ami_info.id
   user_data = file("install_docker.sh")
+  iam_instance_profile   = "roboshop_ec2_route53"
   root_block_device = [
     {
       volume_type = "gp3"
@@ -21,6 +22,7 @@ module "docker" {
     }
   )
 }
+
 
 
 # resource "null_resource" "docker" {
